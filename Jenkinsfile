@@ -3,26 +3,49 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/MasDiptha12/sast-demo-app.git', branch: 'master'
+                git branch: 'master',
+                    url: 'https://github.com/ArNote17/sast-demo-app',
+                    credentialsId: 'github-pat'
             }
         }
         stage('Install Dependencies') {
             steps {
-                script {
-                    // Create virtual environment
-                    sh 'python3 -m venv venv'
-                    // Activate the virtual environment and install bandit
-                    sh '. venv/bin/activate && pip install bandit'
-                }
+                sh '''
+                # Pastikan Python tersedia
+                python3 --version
+                
+                # Buat virtual environment
+                python3 -m venv venv
+
+                # Aktifkan virtual environment
+                . venv/bin/activate
+
+                # Instal Bandit
+                pip install bandit
+                '''
             }
         }
         stage('SAST Analysis') {
             steps {
-                // Run bandit analysis
-                sh '. venv/bin/activate && bandit -f xml -o bandit-output.xml -r . || true'
-                // Record issues
-                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
+                sh '''
+                # Aktifkan virtual environment
+                . venv/bin/activate
+
+                # Jalankan analisis Bandit
+                bandit -f xml -o bandit-output.xml -r . || true
+                '''
+
+                // Simpan hasil analisis
+                archiveArtifacts artifacts: 'bandit-output.xml', allowEmptyArchive: true
             }
+        }
+    }
+    post {
+        always {
+            sh '''
+            # Bersihkan virtual environment
+            rm -rf venv
+            '''
         }
     }
 }
