@@ -8,7 +8,9 @@ pipeline {
         }
         stage('Install Dependencies') {
             steps {
-                sh 'pip install bandit'
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install bandit
             }
         }
         stage('SAST Analysis') {
